@@ -31,5 +31,7 @@ module.exports = {
    * If you want to also use it in dev, you can pass ['production', 'development']
    */
   errorLog: 'production',
-  serverIpPort: 'http://127.0.0.1:8088'
+  serverIpPort: 'http://10.109.246.53:8090',
+  resourceIpPort: 'http://10.109.246.53:8090',
+  port: 8088
 }

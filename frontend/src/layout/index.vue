@@ -18,7 +18,6 @@ import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
 
 export default {
-   // eslint-disable-next-line vue/multi-word-component-names
   name: 'Layout',
   components: {
     AppMain,

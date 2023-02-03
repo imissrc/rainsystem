@@ -19,12 +19,12 @@ module.exports = {
   //it is base on https://github.com/vuejs/eslint-config-vue
   rules: {
     // 强制第一个属性的位置(属性换行)
-    'vue/first-attribute-linebreak': [2, {
-      // 单行时，第一属性前不允许使用换行符
-      singleline: 'beside',
-      // 多行时，第一属性前必须使用换行符
-      multiline: 'below',
-    }],
+    // 'vue/first-attribute-linebreak': [2, {
+    //   // 单行时，第一属性前不允许使用换行符
+    //   singleline: 'beside',
+    //   // 多行时，第一属性前必须使用换行符
+    //   multiline: 'below',
+    // }],
     // 强制每行的最大属性数
     'vue/max-attributes-per-line': [2, {
       // 单行时可以接收最大数量

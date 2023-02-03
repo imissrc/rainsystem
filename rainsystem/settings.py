@@ -15,30 +15,34 @@ import os
 import subprocess
 import socket
 # from backend.dehazing.test import create_dehazingModel
-from backend.derain.load_model import createMoss
+# from backend.derain.load_model import createMoss
 # import backend.textspot.mmocr.init_text_model as InitTextModel
+
+import pymysql
+pymysql.version_info = (1, 4, 13, "final", 0)
+pymysql.install_as_MySQLdb()
 
 # Models
 
-VIDEO_PORT = "9001"
-p = subprocess.Popen('ps -ef | grep ' + VIDEO_PORT + " | grep -v grep", shell=True)
+RESOURCE_PORT = "8095"
+RESOURCE_IP_PORT = "http://10.109.246.53:" + RESOURCE_PORT
+p = subprocess.Popen('ps -ef | grep ' + RESOURCE_PORT + " | grep -v grep", shell=True)
 text = p.communicate()
-if text is None or len(text) == 0:
-    s = subprocess.Popen("python -m http.server " + VIDEO_PORT, shell=True, close_fds=True)
+if text is None or len(text) == 0 or text[0] is None:
+    s = subprocess.Popen("python -m http.server " + RESOURCE_PORT, shell=True, close_fds=True)
 BASE_DIR = Path(__file__).resolve().parent.parent
-MEDIA_URL = 'resources/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'resources')
-IP="http://10.109.246.55"
-MODEL_DIRECTORY = {
-    0: 'tmp',
-    1: 'deraining',
-    2: 'dehazing',
-    3: 'deblurring',
-    4: 'enhance',
-    5: 'textdetection',
-    6: 'derainingThenTextdetection',
-    7: 'dehazingThenTextdetection'
-}
+RESOURCE_RELATIVE_PATH = 'backend/resources/'
+RESOURCE_ROOT = os.path.join(BASE_DIR, RESOURCE_RELATIVE_PATH)
+# MODEL_DIRECTORY = {
+#     0: 'tmp',
+#     1: 'deraining',
+#     2: 'dehazing',
+#     3: 'deblurring',
+#     4: 'enhance',
+#     5: 'textdetection',
+#     6: 'derainingThenTextdetection',
+#     7: 'dehazingThenTextdetection'
+# }
 CHANNELS_SRC = {
     0: 1,
 }
@@ -51,9 +55,9 @@ CHANNELS_RES = {
     6: 3,
     7: 3,
 }
-HOST = IP + ":10800"
+# HOST = IP + ":10800"
 #print(IP)
-RESOURCE_HOST = IP + ":" + VIDEO_PORT + "/resources"
+# RESOURCE_HOST = IP + ":" + VIDEO_PORT + "/resources"
 #print(RESOURCE_HOST)
 USER = 'admin'
 PASSWORD = 'admin'
@@ -115,7 +119,7 @@ DATABASES = {
         'NAME': 'rainsystem',
         'USER': 'rc',
         'PASSWORD': '',
-        'HOST': '10.109.246.55',
+        'HOST': '10.109.246.53',
         'PORT': '3307',
         'OPTIONS': {
             'autocommit': True,
@@ -184,8 +188,9 @@ EMAIL_HOST_USER = 'imissrc@163.com'  # 帐号，发送邮件的邮箱地址
 EMAIL_HOST_PASSWORD = 'rc123456'  # 授权码
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # 收件人看到的发件人
 
-# load model
+# load dao
 # dehazing_model = create_dehazingModel()
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
-derain_moss_model = createMoss()
+# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+derain_moss_model = None
+# derain_moss_model = createMoss()
 # mmocr_model = InitTextModel.build_mmocr_model()   # 初始化一个MMOCR类

@@ -17,12 +17,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
 from django.views.static import serve
-from rainsystem.settings import MEDIA_ROOT
-from django.conf.urls import url
+from rainsystem.settings import RESOURCE_RELATIVE_PATH
+# from django.conf.urls import url
+from django.urls import re_path as url
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('backend.urls')),
     path('', TemplateView.as_view(template_name="index.html")),
-    url(r'resources/(?P<path>.*)',serve,{'document_root':MEDIA_ROOT})
+    url(r'resources/(?P<path>.*)', serve, {'document_root': RESOURCE_RELATIVE_PATH})
 ]

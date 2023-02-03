@@ -1,9 +1,9 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Login from '@/components/login/Login'
-import Register from '@/components/login/Register'
-import FindPassword from '@/components/login/FindPassword'
-import ChangePassword from '@/components/login/ChangePassword'
+import Login from '@/views/login/login'
+import Register from '@/views/login/register'
+import FindPassword from '@/views/login/findPassword'
+import ChangePassword from '@/views/login/changePassword'
 
 Vue.use(Router)
 
@@ -13,11 +13,32 @@ import Layout from '@/layout'
 export const constantRoutes = [
   {
     path: '/',
+    redirect: '/login',
+    hidden: true
+  },
+  {
+    path: '/login',
     name: 'Login',
     component: Login,
-    meta: {
-      keeplive: false
-    }
+    hidden: true
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    hidden: true
+  },
+  {
+    path: '/findPassword',
+    name: 'FindPassword',
+    component: FindPassword,
+    hidden: true
+  },
+  {
+    path: '/changePassword',
+    name: 'ChangePassword',
+    component: ChangePassword,
+    hidden: true
   },
   {
     path: '/dashboard',
@@ -27,7 +48,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/components/dashboard/index'),
+        component: () => import('@/views/dashboard/index'),
         meta: {
           title: '首页',
           icon: 'dashboard'
@@ -37,50 +58,59 @@ export const constantRoutes = [
   },
   {
     path: '/derain',
-    name: 'derain',
+    name: 'Derain',
     component: Layout,
+    redirect: '/derain/image',
+    meta: {
+      title: '图像/视频去雨',
+      icon: 'documentation'
+    },
     children: [
-        {
-        path: 'index',
-        component: () => import('@/components/dashboard/index'),
+      {
+        path: 'image',
+        name: 'ImageDerain',
+        component: () => import('@/views/derain/imageDerain'),
         meta: {
-          title: '首页',
-          icon: 'dashboard'
+          title: '图像去雨'
+        }
+      },
+      {
+        path: 'video',
+        name: 'VideoDerain',
+        component: () => import('@/views/derain/videoDerain'),
+        meta: {
+          title: '视频去雨'
         }
       }
     ]
   },
   {
     path: '/history',
-    name: 'manual',
-    component: () => import('@/components/history/history'),
+    name: 'history',
+    component: Layout,
+    redirect: '/history/image',
     meta: {
-      keeplive: false
-    }
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: Register,
-    meta: {
-      keeplive: false
-    }
-  },
-  {
-    path: '/findPassword',
-    name: 'FindPassword',
-    component: FindPassword,
-    meta: {
-      keeplive: false
-    }
-  },
-  {
-    path: '/changePassword',
-    name: 'ChangePassword',
-    component: ChangePassword,
-    meta: {
-      keeplive: false
-    }
+      title: '图像/视频历史记录',
+      icon: 'documentation'
+    },
+    children: [
+      {
+        path: 'image',
+        name: 'HistoryImageDerain',
+        component: () => import('@/views/history/imageDerain'),
+        meta: {
+          title: '图像去雨历史记录'
+        }
+      },
+      {
+        path: 'video',
+        name: 'HistoryVideoDerain',
+        component: () => import('@/views/history/videoDerain'),
+        meta: {
+          title: '视频去雨历史记录'
+        }
+      }
+    ]
   }
 ]
 

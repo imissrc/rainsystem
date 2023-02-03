@@ -1,40 +1,25 @@
-from django.http import JsonResponse
-import os
 import uuid
 import rainsystem.settings as settings
 import time
-import pexpect
-import re
 import backend.deal_derain as deal_derain
-from backend.dehazing.test import run_dehazingmodel_image, run_dehazingmodel_video
-from pathlib import Path
 from backend.livenvr import upload_video_livenvr
 from backend.ImageVideo import mp4ToAvi, videoMerge
 import backend.text_spot as textspot
-import base64
 
-from backend.model.User import User
-from backend.model.History import History
+from backend.dao.UserInfoDAO import UserInfoDAO
 # from backend.Files import Files
-from django.contrib import messages
-from django.utils.datetime_safe import datetime
 from django.conf import settings
 from django.core.mail import send_mail
-from random import Random
-from django.db.models.signals import pre_delete
-from django.dispatch.dispatcher import receiver
 # from django.views.decorators.csrf import csrf_exempt,csrf_protect
 from django.http import JsonResponse
 import json
-import csv
 import os
-import chardet
-import pandas as pd
-import cv2
-from PIL import Image
-import shutil
+from backend.model.TaskTypeEnum import TaskTypeEnum
+from backend.model.TaskHistoryDetail import TaskHistoryDetail
+from backend.dao.TaskHistoryDAO import TaskHistoryDAO
+from backend.dao.TaskHistoryDetailDAO import TaskHistoryDetailDAO
 
-User.test_database()
+UserInfoDAO.test_database()
 # currentUserName = User.getCurrentUser()
 
 cur_path = os.path.abspath('.')
@@ -46,14 +31,20 @@ def login(request):
         userinfo = json.loads(request.body)
         username = userinfo['username']
         password = userinfo['password']
-        res = User.login(user_name=username, password=password)
+        res = UserInfoDAO.login(user_name=username, password=password)
+        return JsonResponse(res, safe=False)
+
+def getLoginState(request):
+    if request.method == 'GET':
+        username = request.GET['username']
+        res = UserInfoDAO.getLoginState(user_name=username)
         return JsonResponse(res, safe=False)
 
 def logout(request):
-    userinfo = json.loads(request.body)
-    username = userinfo['username']
-    res = User.logout(username)
-    return JsonResponse(res, safe=False)
+    if request.method == 'GET':
+        username = request.GET['username']
+        res = UserInfoDAO.logout(username)
+        return JsonResponse(res, safe=False)
 
 def register(request):
     if request.method == 'POST':
@@ -61,7 +52,7 @@ def register(request):
         username = userinfo['username']
         email = userinfo['email']
         password = userinfo['password']
-        res = User.register(user_name=username, password=password, email=email)
+        res = UserInfoDAO.register(user_name=username, password=password, email=email)
 
         return JsonResponse(res, safe=False)
 
@@ -71,7 +62,7 @@ def findPassword(request):
         username = userinfo['username']
         email = userinfo['email']
 
-        res, temp_password = User.findPassword(username, email)
+        res, temp_password = UserInfoDAO.findPassword(username, email)
 
         if res['code'] == 0:
             send_mail('亲爱的用户'+username+'我们给你生成了一个随机的6位密码，请尽快登录修改你的密码吧', temp_password, 'imissrc@163.com', [email])
@@ -86,7 +77,7 @@ def changePassword(request):
         oldPassward = userinfo['oldPassword']
         newPassward1 = userinfo['newPassword1']
 
-        res = User.change_password(user_name=username, old_password=oldPassward, new_password=newPassward1)
+        res = UserInfoDAO.change_password(user_name=username, old_password=oldPassward, new_password=newPassward1)
 
         return JsonResponse(res, safe=False)
 
@@ -95,29 +86,9 @@ def getUserInfo(request):
         userinfo = json.loads(request.body)
         username = userinfo['username']
 
-        res = User.getUserInfo(user_name=username)
+        res = UserInfoDAO.getUserInfo(user_name=username)
 
         return JsonResponse(res, safe=False)
-
-def uploadImageList(request):
-    if request.method == 'POST':
-
-        images_obj = request.FILES.getlist('imgList', None)
-
-        image_path = '/backend/resources/data/' + 'test_pic/'
-
-        if not os.path.exists(image_path):
-            os.mkdir(image_path)
-
-        for image in images_obj:
-            imageName = image.name
-            with open(image_path + imageName, 'wb') as f:
-                for chunk in image.chunks():
-                    f.write(chunk)
-
-        res = {'code': 0, 'message': 'uploadImage successfully!'}
-        return JsonResponse(res, safe=False)
-
 
 '''
 根据taskType，运行对应的模型
@@ -130,18 +101,11 @@ def runModel(taskType, file_path, file_type):
         if (taskType == 1):
             # deraining
             deal_derain.getImageDerain(settings.derain_moss_model, file_path, file_path.replace("input", "output"), 'moss')
-        elif (taskType == 2):
-            # dehazing
-            run_dehazingmodel_image(settings.dehazing_model, file_path)
-            pass
+
         elif (taskType == 3):
             # deblurring
             pass
-        elif (taskType == 4):
-            # enhance
-            # command: ./Retinex input output
-            run_dehazingmodel_image(settings.dehazing_model, file_path)
-            pass
+
         elif (taskType == 5):
             # textdetect
             img = file_path
@@ -153,17 +117,8 @@ def runModel(taskType, file_path, file_type):
         if (taskType == 1):
             # deraining
             deal_derain.getVideoDerain(settings.derain_moss_model, file_path, file_path.replace("input", "output"), 'moss')
-        elif (taskType == 2):
-            # dehazing
-            run_dehazingmodel_video(settings.dehazing_model, file_path)
-            pass
         elif (taskType == 3):
             # deblurring
-            pass
-        elif (taskType == 4):
-            # enhance
-            # command: ./Retinex input output
-            run_dehazingmodel_video(settings.dehazing_model, file_path)
             pass
         elif (taskType == 5):
             # textdetect
@@ -173,51 +128,66 @@ def runModel(taskType, file_path, file_type):
             input_video_images, output_video_images, fps = deal_derain.runVideoDerainModel(settings.derain_moss_model, file_path, 'moss')
             out_images = textspot.get_img_list_ocr(settings.mmocr_model, output_video_images)
             videoMerge(input_video_images, out_images, fps, file_path.replace('input', 'output'))
-        elif (taskType == 7):
-            # dehazing then textdetect
-            haze_images, images, fps = run_dehazingmodel_video(settings.dehazing_model, file_path, tmp = True)
-            #images type: list of np.ndarray
-            #fps type: int, save video in this fps
-            #textdetect and save at here
-            out_images = textspot.get_img_list_ocr(settings.mmocr_model, images)
-            videoMerge(haze_images, out_images, fps, file_path.replace('input', 'output'))
     else:
         #error
         pass
 
 
-def uploadImage(request):
+def uploadImagesAndRestore(request):
     if request.method == 'POST':
-
-        image = request.FILES.get('image', None)
+        username = request.POST['username']
         taskType = int(request.POST['taskType'])
-        if not (taskType >= 1 and taskType <= 5):
+        imageList = request.FILES.getlist('images', [])
+        if len(imageList) == 0:
+            return JsonResponse({"code": 400, "message": "upload list can not be empty"}, safe=False)
+
+        taskTypeEnum = TaskTypeEnum.valueOf(taskType)
+        if taskTypeEnum is None:
             return JsonResponse({"code": 400, "message": "未知的图像处理任务"}, safe=False)
-        # current_path = os.path.abspath('.')
-        # image_path = os.path.join(current_path, 'backend/resources/'.replace('/', '\\')) #linux目录格式改成windows的格式
-        ext = image.name.split('.')[-1]
-        image_name = generateFileName(ext, settings.MEDIA_ROOT)
-        if image_name == '':
-            res = {"code": 400, "message": "图片上传失败，请重试"}
-            return JsonResponse(res, safe=False)
 
-        # 根据任务类型将输入图片存到相应目录中
-        image_path = generateFilePath(taskType, 'input-' + image_name)
-        # print(image_path)
-        with open(image_path, 'wb') as f:
-            for chunk in image.chunks():
-                f.write(chunk)
-        f.close()
-        # url_prefix = request.build_absolute_uri('/')+settings.MEDIA_URL
-        # 运行模型
-        runModel(taskType, image_path, 0)
+        imageUrlList = []
+        for image in imageList:
+            ext = image.name.split('.')[-1]
+            image_name = 'input-' + generateFileName(ext, settings.MEDIA_ROOT)
+            if image_name == 'input-':
+                res = {"code": 400, "message": "图片上传失败，请重试"}
+                return JsonResponse(res, safe=False)
 
-        res = {"code": 200, "message": "success", "data": image_name}
+            # 根据任务类型将输入图片存到相应目录中
+            image_path = generateFilePath(taskTypeEnum, image_name)
+            # print(image_path)
+            with open(image_path, 'wb') as f:
+                for chunk in image.chunks():
+                    f.write(chunk)
+            f.close()
+            imageUrlList.append(getResourceUrl(taskTypeEnum, image_name))
+
+        taskHistoryId = TaskHistoryDAO.addTaskHistory(username, taskType)
+        print('imageUrlList: ')
+        print(imageUrlList)
+        TaskHistoryDetailDAO.addTaskHistoryDetail(buildTaskHistoryDetailList(taskHistoryId, imageUrlList))
+        #todo 异步执行去雨任务
+        res = {"code": 200, "data": {'taskHistoryId': taskHistoryId, 'total': len(imageList)}}
         print(res)
         return JsonResponse(res, safe=False)
     else:
         print(request.method)
         return JsonResponse({"code": 400, "message": "error"}, safe=False)
+
+def buildTaskHistoryDetailList(taskHistoryId, resourceUrlList):
+    taskHistoryDetailList = []
+    for resourceUrl in resourceUrlList:
+        taskHistoryDetail = TaskHistoryDetail(taskHistoryId, resourceUrl, '')
+        taskHistoryDetailList.append(taskHistoryDetail)
+    return taskHistoryDetailList
+
+def getDetailByTaskHistoryId(request):
+    if request.method == 'GET':
+        taskHistoryId = int(request.GET.get('taskHistoryId'))
+        start = int(request.GET.get('start'))
+        pageSize = int(request.GET.get('pageSize'))
+        res = TaskHistoryDetailDAO.getDetailByTaskHistoryId(taskHistoryId, start, pageSize)
+        return JsonResponse(res, safe=False)
 
 def uploadVideo(request):
     if request.method == 'POST':
@@ -326,11 +296,12 @@ def queryVideoTaskResult(request):
 
 
 
-def generateFilePath(taskType, image_name):
-    directory_path = os.path.join(settings.MEDIA_ROOT, settings.MODEL_DIRECTORY[taskType])
+def generateFilePath(taskTypeEnum, image_name):
+    directory_path = os.path.join(settings.RESOURCE_ROOT, taskTypeEnum.name)
+    print("directory_path: " + directory_path)
     if not os.path.exists(directory_path):
         os.mkdir(directory_path)
-    return os.path.join(settings.MEDIA_ROOT, settings.MODEL_DIRECTORY[taskType], image_name)
+    return os.path.join(settings.RESOURCE_ROOT, taskTypeEnum.name, image_name)
 
 
 def generateFileName(ext, filePath):
@@ -344,3 +315,7 @@ def generateFileName(ext, filePath):
         i += 1
     return ''
 
+
+def getResourceUrl(taskTypeEnum, resouceName):
+    return os.path.join(settings.RESOURCE_IP_PORT, settings.RESOURCE_RELATIVE_PATH, taskTypeEnum.name,
+                                    resouceName.replace('\\', '/'))

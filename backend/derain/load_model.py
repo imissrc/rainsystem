@@ -7,7 +7,7 @@ import backend.derain.MOSS.derain as MossDerain
 
 def createMprnet():
     cur_path = Path(__file__).resolve().parent
-    # Load corresponding model architecture and weights
+    # Load corresponding dao architecture and weights
     load_file = run_path(os.path.join(cur_path, "MPRNet/MPRNet.py"))
     model = load_file['MPRNet']()
     model.cuda()

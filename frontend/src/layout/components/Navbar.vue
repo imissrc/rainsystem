@@ -13,23 +13,20 @@
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <!--          <div class="avartar-name">-->
-          <!--            你好，{{ name }}-->
-          <!--          </div>-->
-          <div class="avatar-image">
-            <img :src="resourceUrl + avatar" class="user-avatar">
-            <i class="el-icon-caret-bottom" />
-          </div>
-          <div class="avartar-name">
-            {{ loginName }}
+          <div class="avatar-name">
+            你好，{{ username }}
           </div>
         </div>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item divided @click.native="logout">
+          <el-dropdown-item divided @click.native="handleChangePassword">
+            <span style="display:block;">修改密码</span>
+          </el-dropdown-item>
+          <el-dropdown-item divided @click.native="handleLogout">
             <span style="display:block;">退出登录</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
+      <ChangePassword :change-visible="changeVisible" />
     </div>
   </div>
 </template>
@@ -39,24 +36,24 @@ import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
 import ErrorLog from '@/components/ErrorLog'
-import { resourceUrl } from '@/api/resource'
+import ChangePassword from '@/views/login/changePassword'
 
 export default {
   components: {
     Breadcrumb,
     Hamburger,
-    ErrorLog
+    ErrorLog,
+    ChangePassword
   },
   data() {
     return {
-      resourceUrl: resourceUrl
+      changeVisible: false
     }
   },
   computed: {
     ...mapGetters([
       'sidebar',
-      'loginName',
-      'avatar',
+      'username',
       'device'
     ])
   },
@@ -64,12 +61,15 @@ export default {
     toggleSideBar() {
       this.$store.dispatch('app/toggleSideBar')
     },
-    logout() {
-      this.$store.dispatch('user/logout').then(() => {
+    handleLogout() {
+      this.$store.dispatch('user/logoutAct').then(() => {
         this.$router.push(`/login?redirect=${this.$route.fullPath}`)
       }).catch(() => {
         this.$router.push(`/login?redirect=${this.$route.fullPath}`)
       })
+    },
+    handleChangePassword() {
+      this.changeVisible = true
     }
   }
 }
@@ -138,28 +138,20 @@ export default {
       .avatar-wrapper {
         margin-top: 5px;
         position: relative;
-        display: flex;
 
-        .avartar-name {
+        .user-avatar {
+          cursor: pointer;
+          width: 40px;
           height: 40px;
-          line-height: 40px;
+          border-radius: 10px;
         }
 
-        .avatar-image {
-          .user-avatar {
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-          }
-
-          .el-icon-caret-bottom {
-            cursor: pointer;
-            position: absolute;
-            right: -20px;
-            top: 25px;
-            font-size: 12px;
-          }
+        .el-icon-caret-bottom {
+          cursor: pointer;
+          position: absolute;
+          right: -20px;
+          top: 25px;
+          font-size: 12px;
         }
       }
     }

@@ -1,9 +1,6 @@
 'use strict'
 const path = require('path')
-
-const name = 'Deraining' // page title
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
-
+const defaultSettings = require('./src/settings.js')
 function resolve(dir) {
   return path.join(__dirname, dir)
 }
@@ -23,29 +20,28 @@ module.exports = {
   lintOnSave: process.env.NODE_ENV === 'development',
   productionSourceMap: false,
   devServer: {
-    port: 8088,
+    port: defaultSettings.port,
     open: true,
     proxy: {
-        '/': {
-            target: 'http://10.109.246.55:8080',
-            changeOrigin: true,
-            ws: true,
-            pathRewrite: {
-                '^/': ''
-            }
+      '/': {
+        target: defaultSettings.serverIpPort,
+        changeOrigin: true,
+        ws: true,
+        pathRewrite: {
+          '^/': ''
         }
+      }
     }
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
-    name: name,
+    name: defaultSettings.title,
     resolve: {
       alias: {
         '@': resolve('src')
       }
-    },
-      plugins: [new NodePolyfillPlugin()]
+    }
   },
   chainWebpack() {
   },

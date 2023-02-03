@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function login (data) {
+export function login(data) {
   return request({
     url: '/login',
     method: 'post',
@@ -8,7 +8,7 @@ export function login (data) {
   })
 }
 
-export function register (data) {
+export function register(data) {
   return request({
     url: '/register',
     method: 'post',
@@ -16,14 +16,15 @@ export function register (data) {
   })
 }
 
-export function logout () {
+export function logout(params) {
   return request({
     url: '/logout',
-    method: 'get'
+    method: 'get',
+    params: params
   })
 }
 
-export function findPassword (data) {
+export function findPassword(data) {
   return request({
     url: '/findPassword',
     method: 'post',
@@ -31,7 +32,7 @@ export function findPassword (data) {
   })
 }
 
-export function changePassword (data) {
+export function changePassword(data) {
   return request({
     url: '/changePassword',
     method: 'post',
@@ -39,17 +40,9 @@ export function changePassword (data) {
   })
 }
 
-export function getUserInfo (params) {
+export function getLoginState(params) {
   return request({
-    url: '/getUserInfo',
-    method: 'get',
-    params
-  })
-}
-
-export function isLogin (params) {
-  return request({
-    url: 'isLogin',
+    url: '/getLoginState',
     method: 'get',
     params
   })

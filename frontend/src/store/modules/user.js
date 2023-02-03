@@ -1,37 +1,38 @@
-import {isLogin, login, logout} from '@/api/login'
+import { login, logout } from '@/api/login'
 import {
   getUserName,
   setUserName,
   removeUserName,
+  getLoginState,
+  setLoginState,
+  removeLoginState
 } from '@/utils/auth'
-import router, { resetRouter } from '@/router'
+import { resetRouter } from '@/router'
 
 const state = {
   username: getUserName(),
-  roles: []
+  loginState: getLoginState()
 }
 
 const mutations = {
   SET_USER_NAME: (state, username) => {
     state.username = username
   },
+  SET_LOGIN_STATE: (state, loginState) => {
+    state.loginState = loginState
+  }
 }
 
 const actions = {
   // user login
-  loginAct({ commit }, userInfo) {
-    const { username, password } = userInfo
+  loginAct({ commit }, info) {
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(res => {
+      login({ username: info.username.trim(), password: info.password.trim() }).then(res => {
         if (res.code === 200) {
-
-          commit('SET_USER_NAME', username)
-          commit('SET_IS_LOGIN', res.data.avatar)
-          // setToken(res.data.token)
-          // setInfoId(res.data.infoId)
-          // setLoginName(loginName)
-          // setAvatar(res.data.avatar)
-          setUserName(res.data.username)
+          commit('SET_USER_NAME', info.username)
+          commit('SET_LOGIN_STATE', true)
+          setUserName(info.username)
+          setLoginState(true)
           resolve()
         }
       }).catch(error => {
@@ -43,16 +44,18 @@ const actions = {
   // get user info
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
-      isLogin().then(res => {
+      getLoginState({ username: state.username.trim() }).then(res => {
         if (res.code !== 200) {
           reject('Verification failed, please Login again.')
         } else {
-          if (res.data.isLogin === true) {
-            commit('SET_USER_NAME', res.data.username)
+          if (res.data === true) {
+            commit('SET_USER_NAME', state.username)
+            commit('SET_LOGIN_STATE', true)
+            removeUserName()
+            removeLoginState()
             resolve()
           }
         }
-
       }).catch(error => {
         reject(error)
       })
@@ -62,12 +65,11 @@ const actions = {
   // user logout
   logoutAct({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
-      logout().then(res => {
-
+      logout({ username: state.username }).then(res => {
         commit('SET_USER_NAME', '')
-
+        commit('SET_LOGIN_STATE', '')
         removeUserName()
-
+        removeLoginState()
         resetRouter()
 
         // reset visited views and cached views

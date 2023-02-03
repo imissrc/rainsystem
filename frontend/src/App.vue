@@ -20,7 +20,7 @@ html,body,#app {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: url("assets/bg.jpg") repeat;
+  /*background: url("assets/bg.jpg") repeat;*/
   background-size: cover;
 }
 </style>
